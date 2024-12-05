@@ -1,10 +1,12 @@
 import cors from 'cors';
-import 'dotenv/config';
+// import 'dotenv/config'; blocking out for saving
 import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { sendMessage } from './services/openai.service';
 import { errorHandler } from './utils/error-handler';
+import { connect } from 'http2';
+import { connectDb } from './services/db.service';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,6 +32,12 @@ app.post('/chat', [body('message').notEmpty(), body('thread_id').notEmpty()], as
     const data: { thread_id: string; message: { text: string; url?: string } } = req.body;
     const response = await sendMessage(data.thread_id, data.message);
     return res.json({ response });
+});
+
+//we will see the error in the terminal if there is one connecting
+connectDb().catch(error => {
+    console.error('Error connecting to database', error);
+    process.exit(1); //terminates the process
 });
 
 app.use(errorHandler);
